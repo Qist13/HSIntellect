@@ -1,16 +1,8 @@
-const fs = require("fs");
-const path = require("path");
-const os = require("os");
+import fs from "fs";
+import path from "path";
+import os from "os";
 
-const LOG_CONFIG = `[Power]
-LogLevel=1
-FilePrinting=True
-ConsolePrinting=False
-ScreenPrinint=False
-Verbose=True
-`;
-
-function getLogConfigPath() {
+export default function getLogConfigPath() {
     switch (process.platform) {
         case "win32":
             return path.join(
@@ -69,14 +61,4 @@ function getLinuxLogConfigPath() {
     }
 
     throw new Error("Could not find Hearthstone Proton directory");
-}
-
-try {
-    const filePath = getLogConfigPath();
-
-    fs.writeFileSync(filePath, LOG_CONFIG);
-    console.log(`[*] log.config file created at: ${filePath}`);
-} catch (err) {
-    console.log("[!] Failed to create log.config file");
-    console.error(err.message);
 }
