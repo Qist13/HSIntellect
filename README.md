@@ -4,7 +4,7 @@ A Hearthstone deck tracker. It reads the game's log files and shows an always-on
 
 Works on Linux (Steam/Proton, Lutris, Bottles, Heroic, Wine), Windows and macOS.
 
-![The opponent tracker, control window and deck tracker with a card preview, during a game](docs/images/overview.png)
+![HSIntellect during a game: the opponent tracker on the left and the deck tracker with draw chances on the right](docs/images/ingame.png)
 
 ## Features
 
@@ -47,6 +47,8 @@ Build with `npm run dist:win` or `npm run dist:mac` on that platform.
 Hearthstone not found? Open the control window and use **Hearthstone → Choose folder…** to pick the install folder (the one containing `Hearthstone.exe` / `Hearthstone_Data`).
 
 ## Using it
+
+![The opponent tracker, control window and deck tracker with a card preview](docs/images/overview.png)
 
 The overlays are **locked** by default: clicks go straight through to the game. Unlock them to drag and resize them, then lock them again.
 
