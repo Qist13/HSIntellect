@@ -4,7 +4,7 @@
     "type": "module",
     "main": "src/main.js",
     "scripts": {
-        "start": "node src/main.js"
+        "start": "electron ."
     },
     "repository": {
         "type": "git",
@@ -16,5 +16,8 @@
         "url": "https://github.com/Qist13/HSIntellect/issues"
     },
     "homepage": "https://github.com/Qist13/HSIntellect#readme",
-    "description": ""
+    "description": "",
+    "devDependencies": {
+        "electron": "^44.4.5"
+    }
 }

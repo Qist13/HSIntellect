@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Card database cache
+.cache/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build output
+dist/
+out/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

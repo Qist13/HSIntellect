@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'" />
+        <title>HSIntellect</title>
+        <link rel="stylesheet" href="control.css" />
+    </head>
+    <body>
+        <main>
+            <h1>HSIntellect</h1>
+
+            <section>
+                <h2>Overlay</h2>
+
+                <label class="row">
+                    <span>Show overlay</span>
+                    <input type="checkbox" class="switch" id="overlay-visible" />
+                </label>
+
+                <label class="row">
+                    <span>
+                        Lock overlay
+                        <small>Clicks pass through to the game</small>
+                    </span>
+                    <input type="checkbox" class="switch" id="overlay-locked" />
+                </label>
+
+                <label class="row">
+                    <span>Opacity <output id="opacity-value"></output></span>
+                    <input type="range" id="overlay-opacity" min="0.2" max="1" step="0.05" />
+                </label>
+
+                <label class="row">
+                    <span>Scale <output id="scale-value"></output></span>
+                    <input type="range" id="overlay-scale" min="0.6" max="1.6" step="0.05" />
+                </label>
+
+                <button id="reset-position" class="secondary">Reset overlay position</button>
+            </section>
+
+            <section>
+                <h2>Deck</h2>
+                <textarea
+                    id="deck-code"
+                    rows="3"
+                    spellcheck="false"
+                    placeholder="Paste a deck code (or the full text copied from Hearthstone)"
+                ></textarea>
+                <div class="actions">
+                    <button id="load-deck">Load deck</button>
+                    <span id="deck-status"></span>
+                </div>
+                <ul id="deck-preview"></ul>
+            </section>
+
+            <section>
+                <h2>Shortcuts</h2>
+                <div class="row"><span>Toggle overlay</span><kbd id="kbd-toggle"></kbd></div>
+                <div class="row"><span>Lock / unlock overlay</span><kbd id="kbd-lock"></kbd></div>
+            </section>
+
+            <button id="quit" class="danger">Quit HSIntellect</button>
+        </main>
+        <script src="control.js"></script>
+    </body>
+</html>

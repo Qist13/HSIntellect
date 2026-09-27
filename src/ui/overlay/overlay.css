@@ -1,0 +1,139 @@
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    height: 100%;
+    background: transparent;
+    overflow: hidden;
+    user-select: none;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    color: #fff;
+}
+
+#root {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    transform-origin: top left;
+}
+
+body.unlocked #root {
+    border: 2px dashed rgba(255, 200, 80, 0.8);
+    background: rgba(0, 0, 0, 0.25);
+    -webkit-app-region: drag;
+}
+
+#header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: rgba(20, 20, 28, 0.9);
+    font-weight: 600;
+    font-size: 13px;
+}
+
+#count {
+    color: #f2c14e;
+}
+
+#cards {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 30px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #1d1f26;
+    font-size: 13px;
+    text-shadow:
+        0 0 3px #000,
+        0 0 2px #000;
+}
+
+.card .tile {
+    position: absolute;
+    right: 28px;
+    top: 0;
+    height: 100%;
+    width: 65%;
+    object-fit: cover;
+    mask-image: linear-gradient(to right, transparent, #000 45%);
+}
+
+.card .cost,
+.card .name,
+.card .qty {
+    position: relative;
+}
+
+.card .cost {
+    flex: none;
+    width: 30px;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    background: #2b5ea8;
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.card .name {
+    flex: 1;
+    padding: 0 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card .qty {
+    flex: none;
+    width: 28px;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    background: #111;
+    color: #f2c14e;
+    font-weight: 700;
+}
+
+.card.legendary .qty {
+    color: #ff9b2f;
+}
+
+.card.empty {
+    opacity: 0.35;
+}
+
+#unlocked-hint {
+    display: none;
+    margin-top: auto;
+    padding: 4px;
+    text-align: center;
+    font-size: 11px;
+    color: #f2c14e;
+    text-shadow: 0 0 3px #000;
+}
+
+body.unlocked #unlocked-hint {
+    display: block;
+}

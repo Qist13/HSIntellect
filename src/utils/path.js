@@ -56,6 +56,7 @@ function getLinuxLogConfigPath() {
         );
 
         if (fs.existsSync(hearthstoneDir)) {
+            console.log(hearthstoneDir);
             return path.join(hearthstoneDir, "log.config");
         }
     }

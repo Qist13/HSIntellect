@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self'; img-src 'self' https://art.hearthstonejson.com"
+        />
+        <link rel="stylesheet" href="overlay.css" />
+    </head>
+    <body>
+        <div id="root">
+            <header id="header">
+                <span id="hero">No deck loaded</span>
+                <span id="count"></span>
+            </header>
+            <ul id="cards"></ul>
+            <div id="unlocked-hint">Drag to move · Ctrl+Shift+L to lock</div>
+        </div>
+        <script src="overlay.js"></script>
+    </body>
+</html>
