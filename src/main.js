@@ -11,13 +11,14 @@ import setupLogConfig from "./hearthstone/logConfig.js";
 import LogWatcher from "./hearthstone/logWatcher.js";
 import GameTracker from "./hearthstone/gameTracker.js";
 import DecksLogParser from "./hearthstone/decksLog.js";
-import { extractDeckCode, resolveDeck } from "./deck/deckParser.js";
+import { extractDeckCode, extractDeckName, resolveDeck } from "./deck/deckParser.js";
 import {
     getCardDatabase,
     getCardDatabaseInfo,
     getLoadedCardDatabase,
     refreshCardDatabase,
     refreshIfMissing,
+    setCacheDir,
 } from "./deck/cardDatabase.js";
 import { getSettings, loadSettings, updateSettings } from "./settings.js";
 import { clearHistory, getHistorySummary, recordGame } from "./history.js";
@@ -64,6 +65,7 @@ let trackerSnapshot = tracker.getSnapshot();
 
 let watcher = null;
 let sessionDir = null;
+let queuedDecks = []; // decks queued with this log session, from Decks.log
 let hearthstone = { dir: null, auto: true, found: false, error: null };
 
 function broadcast(channel, payload) {
@@ -180,7 +182,7 @@ function getPlayerOverlayView() {
     const total = currentDeck.cards.reduce((sum, card) => sum + card.count, 0);
 
     return {
-        title: currentDeck.heroes.join(", "),
+        title: currentDeck.name ?? currentDeck.heroes.join(", "),
         // During a game, show what's actually left in the deck (includes cards shuffled in)
         count: player ? player.cardsInDeck : total,
         cards: cards.sort(byCostThenName),
@@ -230,10 +232,13 @@ function publish() {
 
 /* ---------- Deck ---------- */
 
-async function loadDeck(deckCode) {
-    const code = extractDeckCode(deckCode);
-    currentDeck = { code, ...(await resolveDeck(code)) };
-    updateSettings({ deckCode: code });
+/**
+ * Accepts a bare deck code or the full text copied from Hearthstone (which includes the name).
+ */
+async function loadDeck(deckText, name = extractDeckName(deckText)) {
+    const code = extractDeckCode(deckText);
+    currentDeck = { code, name, ...(await resolveDeck(code)) };
+    updateSettings({ deckCode: code, deckName: name });
 
     publish();
     sendToControl("history:changed", getHistorySummary(code));
@@ -256,9 +261,9 @@ function updateTracking() {
 
 /**
  * Log folders are named Hearthstone_YYYY_MM_DD_HH_MM_SS and log lines only have a time,
- * so combine them to get the date a game started.
+ * so combine them to get the full date of a log line.
  */
-function getGameDate(time) {
+function getLogDate(time) {
     const match = path
         .basename(sessionDir ?? "")
         .match(/(\d{4})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d{2})/);
@@ -274,17 +279,34 @@ function getGameDate(time) {
     return date.getTime();
 }
 
-function onGameEnd(game) {
+/**
+ * Works out which deck a finished game was played with: the last deck queued before
+ * it started (from Decks.log), or else the loaded deck. When the app starts it replays
+ * the whole log session, so the loaded deck isn't necessarily the one an earlier game used.
+ */
+async function getDeckForGame(date) {
+    const queued = queuedDecks.filter((deck) => deck.date <= date).at(-1);
+    if (queued) {
+        const resolved = await resolveDeck(queued.code);
+        return { code: queued.code, name: queued.name ?? resolved.heroes.join(", "), ...resolved };
+    }
+
+    return currentDeck && { ...currentDeck, name: currentDeck.name ?? currentDeck.heroes.join(", ") };
+}
+
+async function onGameEnd(game) {
+    const date = getLogDate(game.startTime);
     const playerClass = game.playerHero ? getCardInfo(game.playerHero).cardClass : null;
 
-    // Only attribute the game to the loaded deck if the class matches
-    const deckMatches = currentDeck && currentDeck.heroClass === playerClass;
+    // Only attribute the game to a deck if the class matches
+    const deck = await getDeckForGame(date);
+    const deckMatches = deck && deck.heroClass === playerClass;
 
     const recorded = recordGame({
         key: `${path.basename(sessionDir ?? "")}|${game.startTime}`,
-        date: getGameDate(game.startTime),
-        deckCode: deckMatches ? currentDeck.code : null,
-        deckName: deckMatches ? currentDeck.heroes.join(", ") : null,
+        date,
+        deckCode: deckMatches ? deck.code : null,
+        deckName: deckMatches ? deck.name : null,
         playerClass: formatClass(playerClass),
         opponentClass: formatClass(
             game.opponentHero ? getCardInfo(game.opponentHero).cardClass : null,
@@ -298,7 +320,9 @@ function onGameEnd(game) {
     if (recorded) sendToControl("history:changed", getHistorySummary(currentDeck?.code));
 }
 
-tracker.on("gameEnd", onGameEnd);
+tracker.on("gameEnd", (game) =>
+    onGameEnd(game).catch((err) => console.error("[✕] Failed to record game:", err.message)),
+);
 
 /* ---------- Hearthstone location ---------- */
 
@@ -310,6 +334,7 @@ function connectHearthstone() {
     watcher?.stop();
     watcher = null;
     sessionDir = null;
+    queuedDecks = [];
     tracker.reset();
     updateTracking();
 
@@ -347,6 +372,8 @@ function startLogWatcher(logsDir) {
     watcher.on("session", (dir) => {
         console.log("[✓] Watching", dir);
         sessionDir = dir;
+        queuedDecks = [];
+        tracker.spectating = false;
         tracker.reset();
         updateTracking();
     });
@@ -358,10 +385,13 @@ function startLogWatcher(logsDir) {
             return;
         }
 
+        const decks = decksParser.processLines(lines);
+        for (const deck of decks) queuedDecks.push({ ...deck, date: getLogDate(deck.time) });
+
         // Automatically switch to whatever deck was just queued with
-        const deckCode = decksParser.processLines(lines);
-        if (deckCode && deckCode !== currentDeck?.code) {
-            loadDeck(deckCode).catch((err) =>
+        const latest = decks.at(-1);
+        if (latest && latest.code !== currentDeck?.code) {
+            loadDeck(latest.code, latest.name).catch((err) =>
                 console.error("[✕] Failed to load deck from Decks.log:", err.message),
             );
         }
@@ -475,6 +505,7 @@ async function main() {
     await app.whenReady();
 
     const settings = loadSettings();
+    setCacheDir(path.join(app.getPath("userData"), "cache"));
     registerIpc();
     registerShortcuts();
 
@@ -497,7 +528,7 @@ async function main() {
 
     // Load the saved deck first so a deck detected from Decks.log isn't overwritten by it
     if (settings.deckCode) {
-        await loadDeck(settings.deckCode).catch((err) =>
+        await loadDeck(settings.deckCode, settings.deckName).catch((err) =>
             console.error("[✕] Failed to load saved deck:", err.message),
         );
     }

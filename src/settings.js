@@ -15,6 +15,7 @@ const DEFAULTS = {
     showCardPreview: true,
     hearthstoneDir: null, // null = auto-detect
     deckCode: "",
+    deckName: null,
 };
 
 let settings = null;

@@ -3,24 +3,34 @@ import path from "path";
 
 const CARD_DB_URL = "https://api.hearthstonejson.com/v1/latest/enUS/cards.json";
 
-// Resolve relative to src/ so the cache location doesn't depend on the cwd
-const CACHE_DIR = path.join(import.meta.dirname, "..", ".cache");
-const CACHE_FILE = path.join(CACHE_DIR, "cards.json");
+const CACHE_FILE_NAME = "cards.json";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 // Don't hammer the API when a card is missing from the latest data too
 const MIN_REFETCH_INTERVAL_MS = 10 * 60 * 1000;
 
+// Set by the app to a writable per-user folder (the app's own files are read-only once packaged)
+let cacheDir = null;
+
 let database = null;
 let lastFetchAt = 0;
 let pendingFetch = null;
+
+export function setCacheDir(dir) {
+    cacheDir = dir;
+}
+
+function getCacheFile() {
+    if (!cacheDir) throw new Error("Card database cache directory not set");
+    return path.join(cacheDir, CACHE_FILE_NAME);
+}
 
 /**
  * Returns true if the cache file exists and was written less than CACHE_TTL_MS ago.
  */
 function isCacheFresh() {
     try {
-        const stats = fs.statSync(CACHE_FILE);
+        const stats = fs.statSync(getCacheFile());
         return Date.now() - stats.mtimeMs < CACHE_TTL_MS;
     } catch {
         return false;
@@ -38,8 +48,8 @@ async function fetchCardList() {
 
     const cards = await res.json();
 
-    fs.mkdirSync(CACHE_DIR, { recursive: true });
-    fs.writeFileSync(CACHE_FILE, JSON.stringify(cards));
+    fs.mkdirSync(cacheDir, { recursive: true });
+    fs.writeFileSync(getCacheFile(), JSON.stringify(cards));
 
     return cards;
 }
@@ -49,7 +59,7 @@ async function fetchCardList() {
  */
 async function loadCardList() {
     if (isCacheFresh()) {
-        const raw = fs.readFileSync(CACHE_FILE, "utf-8");
+        const raw = fs.readFileSync(getCacheFile(), "utf-8");
 
         return JSON.parse(raw);
     }
@@ -116,7 +126,7 @@ export async function refreshIfMissing({ dbfIds = [], ids = [] }) {
 export function getCardDatabaseInfo() {
     let updatedAt = null;
     try {
-        updatedAt = fs.statSync(CACHE_FILE).mtimeMs;
+        updatedAt = fs.statSync(getCacheFile()).mtimeMs;
     } catch {
         // Not downloaded yet
     }

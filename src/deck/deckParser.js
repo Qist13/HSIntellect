@@ -35,7 +35,7 @@ function readVarint(data, pos) {
     return result;
 }
 
-function parseDeckFromCode(deckCode) {
+export function parseDeckFromCode(deckCode) {
     const data = Buffer.from(deckCode, "base64");
     const pos = { i: 0 };
 
@@ -85,6 +85,13 @@ export function extractDeckCode(text) {
     if (!line) throw new Error("No deck code found");
 
     return line;
+}
+
+/**
+ * The deck name from text copied from the Hearthstone client ("### Deck Name"), or null.
+ */
+export function extractDeckName(text) {
+    return text.match(/^\s*###\s*(.+?)\s*$/m)?.[1] ?? null;
 }
 
 export async function resolveDeck(deckCode) {

@@ -41,9 +41,15 @@ const UNKNOWN_PLAYER_NAME = "UNKNOWN HUMAN PLAYER";
 // Modes without a normal constructed deck, where tracking cards makes no sense
 const UNTRACKED_GAME_TYPES = /BATTLEGROUNDS|MERCENARIES/;
 
+// Spectating a friend's game is logged like playing it. These are the markers
+// Hearthstone Deck Tracker looks for; they can appear on any kind of log line.
+const SPECTATE_START_RE = /Begin Spectating|Start Spectator Game/;
+const SPECTATE_END_RE = /End Spectator Mode/;
+
 export default class GameTracker extends EventEmitter {
     constructor() {
         super();
+        this.spectating = false; // spans games, so reset() leaves it alone
         this.reset();
     }
 
@@ -62,7 +68,7 @@ export default class GameTracker extends EventEmitter {
     }
 
     get isTrackable() {
-        return !UNTRACKED_GAME_TYPES.test(this.gameType ?? "");
+        return !this.spectating && !UNTRACKED_GAME_TYPES.test(this.gameType ?? "");
     }
 
     get opponentPlayer() {
@@ -121,6 +127,9 @@ export default class GameTracker extends EventEmitter {
     }
 
     processLine(line) {
+        if (SPECTATE_START_RE.test(line)) this.spectating = true;
+        else if (SPECTATE_END_RE.test(line)) this.spectating = false;
+
         const match = line.match(POWER_LINE_RE);
         if (!match) return;
 

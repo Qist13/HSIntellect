@@ -71,11 +71,12 @@ function renderDeck(deck) {
     }
 
     const total = deck.cards.reduce((sum, c) => sum + c.count, 0);
+    const name = deck.name ?? deck.heroes.join(", ");
     deckStatus.className = "";
     deckStatus.textContent =
         deck.inGame && deck.cardsInDeck !== null
-            ? `${deck.heroes.join(", ")} · in game, ${deck.cardsInDeck} left in deck`
-            : `${deck.heroes.join(", ")} · ${total} cards`;
+            ? `${name} · in game, ${deck.cardsInDeck} left in deck`
+            : `${name} · ${total} cards`;
 
     // The deck may have been picked up automatically from Decks.log
     if (document.activeElement !== deckCodeInput) deckCodeInput.value = deck.code;
