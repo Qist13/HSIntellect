@@ -157,6 +157,26 @@ test("losing is reported as LOST", () => {
     assert.equal(games[0].result, "LOST");
 });
 
+test("playing a hero card doesn't change the player's hero", () => {
+    const tracker = new GameTracker();
+    const games = [];
+    tracker.on("gameEnd", (game) => games.push(game));
+
+    tracker.processLines(
+        syntheticGame({
+            turns: [
+                "FULL_ENTITY - Creating ID=20 CardID=CATA_190h",
+                "    tag=CONTROLLER value=2",
+                "    tag=ZONE value=PLAY",
+                "TAG_CHANGE Entity=Opponent#2000 tag=HERO_ENTITY value=20",
+                ...endGame(),
+            ],
+        }),
+    );
+
+    assert.equal(games[0].opponentHero, "HERO_08");
+});
+
 test("battlegrounds games are not tracked", () => {
     const tracker = new GameTracker();
     const games = [];

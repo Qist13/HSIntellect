@@ -237,6 +237,8 @@ export default class GameTracker extends EventEmitter {
 
             case "HERO_ENTITY":
                 entity.heroEntity = Number(value);
+                // Hero cards replace the hero mid-game; the class comes from the starting one
+                entity.startingHeroEntity ??= entity.heroEntity;
                 break;
 
             case "PLAYSTATE":
@@ -266,8 +268,11 @@ export default class GameTracker extends EventEmitter {
         }
     }
 
+    /**
+     * The hero the player started the game with (hero cards played later don't count).
+     */
     getHeroCardId(playerId) {
-        const heroId = this.players.get(playerId)?.heroEntity;
+        const heroId = this.players.get(playerId)?.startingHeroEntity;
         return heroId ? (this.entities.get(heroId)?.cardId ?? null) : null;
     }
 

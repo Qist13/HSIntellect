@@ -4,6 +4,8 @@ A Hearthstone deck tracker. It reads the game's log files and shows an always-on
 
 Works on Linux (Steam/Proton, Lutris, Bottles, Heroic, Wine), Windows and macOS.
 
+![The opponent tracker, control window and deck tracker with a card preview, during a game](docs/images/overview.png)
+
 ## Features
 
 - **Deck tracker**: your decklist with copies left, faded out as cards leave your deck. Also shows the chance to draw each card next, and cards added to your deck during the game.
@@ -11,6 +13,9 @@ Works on Linux (Steam/Proton, Lutris, Bottles, Heroic, Wine), Windows and macOS.
 - **Automatic deck detection**: picks up the deck you queue with, no copy-pasting needed. You can also paste a deck code (or the full text copied from Hearthstone).
 - **Card previews**: hover a card in the overlay to see the full card.
 - **Match history**: results per deck, with win rate and recent games.
+
+  <img src="docs/images/stats.png" alt="Match history: win/loss record for the deck and recent games" width="420">
+
 - **Stays out of the way**: overlays only show during games and let clicks pass through to the game while locked. The app runs in the tray and can start at login.
 
 ## Install
