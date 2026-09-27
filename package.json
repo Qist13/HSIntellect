@@ -64,5 +64,8 @@
             "category": "public.app-category.games",
             "icon": "build/icon.png"
         }
+    },
+    "dependencies": {
+        "x11": "^4.2.2"
     }
 }

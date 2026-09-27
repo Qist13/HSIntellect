@@ -120,12 +120,26 @@ body.unlocked #root {
     color: #ff9b2f;
 }
 
+/* Draw chance badge: dark background so it stays readable over the card art */
 .card .chance {
     position: relative;
     flex: none;
-    padding: 0 6px;
-    font-size: 11px;
-    color: #cfd6e4;
+    min-width: 36px;
+    margin: 0 4px;
+    padding: 2px 5px;
+    border-radius: 4px;
+    background: rgba(10, 10, 16, 0.85);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    color: #fff;
+    text-shadow: none;
+}
+
+/* The most likely next draw */
+.card .chance.best {
+    background: #f2c14e;
+    color: #16181d;
 }
 
 /* Cards added to the deck during the game */

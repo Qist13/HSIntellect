@@ -21,7 +21,7 @@ function applySettings(settings) {
     root.style.height = `${100 / scale}%`;
 }
 
-function renderCard(card) {
+function renderCard(card, bestChance) {
     const li = document.createElement("li");
     li.className = "card";
     li.dataset.id = card.id ?? "";
@@ -49,7 +49,7 @@ function renderCard(card) {
 
     if (card.chance !== null && card.chance !== undefined && card.qty > 0) {
         const chance = document.createElement("span");
-        chance.className = "chance";
+        chance.className = card.chance === bestChance ? "chance best" : "chance";
         chance.textContent = `${Math.round(card.chance * 100)}%`;
         li.append(chance);
     }
@@ -65,7 +65,8 @@ function renderCard(card) {
 function renderView(view) {
     titleEl.textContent = view.title;
     countEl.textContent = view.count;
-    cardsEl.replaceChildren(...view.cards.map(renderCard));
+    const bestChance = Math.max(0, ...view.cards.map((card) => card.chance ?? 0)) || null;
+    cardsEl.replaceChildren(...view.cards.map((card) => renderCard(card, bestChance)));
     emptyEl.textContent = view.cards.length ? "" : (view.emptyText ?? "");
     statsEl.replaceChildren(
         ...view.stats.map((stat) => {

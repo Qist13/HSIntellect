@@ -1,5 +1,6 @@
 import path from "path";
 import { BrowserWindow, ipcMain, screen } from "electron";
+import { createCursorTracker } from "../utils/cursor.js";
 
 const UI_DIR = path.join(import.meta.dirname, "..", "ui");
 const PRELOAD = path.join(import.meta.dirname, "..", "preload.cjs");
@@ -13,8 +14,8 @@ const POLL_MS = 50;
  * Shows a full card image next to an overlay when hovering a card row.
  *
  * Locked overlays ignore the mouse (and Linux doesn't forward mouse events to them),
- * so instead of relying on DOM hover we poll the cursor position and send it to the
- * overlay under it. The overlay works out which row that is and reports back.
+ * so instead of relying on DOM hover we poll the global cursor position and send it to
+ * the overlay under it. The overlay works out which row that is and reports back.
  */
 export function startCardPreview({ getOverlays, isEnabled }) {
     const preview = new BrowserWindow({
@@ -40,6 +41,7 @@ export function startCardPreview({ getOverlays, isEnabled }) {
     preview.setIgnoreMouseEvents(true);
     preview.loadFile(path.join(UI_DIR, "preview", "preview.html"));
 
+    const cursorTracker = createCursorTracker({ pollMs: POLL_MS });
     let hovered = null; // overlay window currently under the cursor
 
     const setHovered = (overlay) => {
@@ -56,7 +58,7 @@ export function startCardPreview({ getOverlays, isEnabled }) {
             return;
         }
 
-        const cursor = screen.getCursorScreenPoint();
+        const cursor = cursorTracker.getPoint();
         const overlay = getOverlays().find((win) => {
             if (!win || win.isDestroyed() || !win.isVisible()) return false;
             const b = win.getBounds();
@@ -102,6 +104,7 @@ export function startCardPreview({ getOverlays, isEnabled }) {
     return {
         destroy() {
             clearInterval(timer);
+            cursorTracker.destroy();
             if (!preview.isDestroyed()) preview.destroy();
         },
     };
