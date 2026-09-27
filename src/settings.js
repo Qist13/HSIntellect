@@ -4,10 +4,16 @@ import { app } from "electron";
 
 const DEFAULTS = {
     overlayVisible: true,
+    opponentOverlayVisible: true,
+    overlayAutoHide: true, // only show overlays while a game is running
     overlayLocked: true, // locked = click-through, can't be moved
     overlayOpacity: 0.9,
     overlayScale: 1,
     overlayBounds: null,
+    opponentOverlayBounds: null,
+    showDrawChance: true,
+    showCardPreview: true,
+    hearthstoneDir: null, // null = auto-detect
     deckCode: "",
 };
 

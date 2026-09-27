@@ -18,7 +18,7 @@ ex:
 1xxxxxxx another byte follows
 */
 
-import { getCardDatabase } from "./cardDatabase.js";
+import { getCardDatabase, refreshIfMissing } from "./cardDatabase.js";
 
 function readVarint(data, pos) {
     let result = 0;
@@ -89,15 +89,20 @@ export function extractDeckCode(text) {
 
 export async function resolveDeck(deckCode) {
     const decoded = parseDeckFromCode(extractDeckCode(deckCode));
-    const cardDb = await getCardDatabase();
+
+    // A deck with cards we don't know about probably uses cards from a new patch
+    await refreshIfMissing({
+        dbfIds: [...decoded.heroes, ...decoded.cards.map((c) => c.dbfId)],
+    });
+    const { byDbfId } = await getCardDatabase();
 
     const heroes = decoded.heroes.map(
-        (dbfId) => cardDb.get(dbfId)?.name ?? `Unknown (${dbfId})`,
+        (dbfId) => byDbfId.get(dbfId)?.name ?? `Unknown (${dbfId})`,
     );
 
     const cards = decoded.cards
         .map(({ dbfId, count }) => {
-            const card = cardDb.get(dbfId);
+            const card = byDbfId.get(dbfId);
 
             return {
                 dbfId,
@@ -110,5 +115,10 @@ export async function resolveDeck(deckCode) {
         })
         .sort((a, b) => a.cost - b.cost || a.name.localeCompare(b.name));
 
-    return { format: decoded.format, heroes, cards };
+    return {
+        format: decoded.format,
+        heroes,
+        heroClass: byDbfId.get(decoded.heroes[0])?.cardClass ?? null,
+        cards,
+    };
 }

@@ -1,9 +1,14 @@
 const TILE_URL = "https://art.hearthstonejson.com/v1/tiles";
 
+// "player" or "opponent", set by the main process when loading the page
+const kind = new URLSearchParams(location.search).get("kind") ?? "player";
+
 const root = document.getElementById("root");
-const heroEl = document.getElementById("hero");
+const titleEl = document.getElementById("title");
 const countEl = document.getElementById("count");
 const cardsEl = document.getElementById("cards");
+const emptyEl = document.getElementById("empty");
+const statsEl = document.getElementById("stats");
 
 function applySettings(settings) {
     document.body.classList.toggle("unlocked", !settings.overlayLocked);
@@ -19,8 +24,10 @@ function applySettings(settings) {
 function renderCard(card) {
     const li = document.createElement("li");
     li.className = "card";
+    li.dataset.id = card.id ?? "";
     if (card.rarity === "LEGENDARY") li.classList.add("legendary");
-    if (card.count <= 0) li.classList.add("empty");
+    if (card.dim) li.classList.add("empty");
+    if (card.extra) li.classList.add("extra");
 
     if (card.id) {
         const tile = document.createElement("img");
@@ -38,33 +45,61 @@ function renderCard(card) {
     name.className = "name";
     name.textContent = card.name;
 
+    li.append(cost, name);
+
+    if (card.chance !== null && card.chance !== undefined && card.qty > 0) {
+        const chance = document.createElement("span");
+        chance.className = "chance";
+        chance.textContent = `${Math.round(card.chance * 100)}%`;
+        li.append(chance);
+    }
+
     const qty = document.createElement("span");
     qty.className = "qty";
-    qty.textContent = card.rarity === "LEGENDARY" && card.count === 1 ? "★" : card.count;
-
-    li.append(cost, name, qty);
+    qty.textContent = card.star ? "★" : card.qty;
+    li.append(qty);
 
     return li;
 }
 
-function renderDeck(deck) {
-    if (!deck) {
-        heroEl.textContent = "No deck loaded";
-        countEl.textContent = "";
-        cardsEl.replaceChildren();
+function renderView(view) {
+    titleEl.textContent = view.title;
+    countEl.textContent = view.count;
+    cardsEl.replaceChildren(...view.cards.map(renderCard));
+    emptyEl.textContent = view.cards.length ? "" : (view.emptyText ?? "");
+    statsEl.replaceChildren(
+        ...view.stats.map((stat) => {
+            const span = document.createElement("span");
+            span.textContent = stat;
+            return span;
+        }),
+    );
+}
+
+/* Card preview: the main process sends the cursor position while it's over this window */
+
+let hoveredId = null;
+
+window.hsi.onPointer((pointer) => {
+    const row = pointer && document.elementFromPoint(pointer.x, pointer.y)?.closest(".card");
+    const cardId = row?.dataset.id || null;
+
+    if (cardId === hoveredId) return;
+    hoveredId = cardId;
+
+    if (!cardId) {
+        window.hsi.sendHover(null);
         return;
     }
 
-    const total = deck.cards.reduce((sum, c) => sum + c.count, 0);
-    heroEl.textContent = deck.heroes.join(", ");
-    countEl.textContent = total;
-    cardsEl.replaceChildren(...deck.cards.map(renderCard));
-}
+    const rect = row.getBoundingClientRect();
+    window.hsi.sendHover({ cardId, y: rect.top + rect.height / 2 });
+});
 
 window.hsi.onSettings(applySettings);
-window.hsi.onDeck(renderDeck);
+window.hsi.onOverlayView(renderView);
 
-window.hsi.getState().then(({ settings, deck }) => {
+window.hsi.getState().then(({ settings, views }) => {
     applySettings(settings);
-    renderDeck(deck);
+    renderView(views[kind]);
 });

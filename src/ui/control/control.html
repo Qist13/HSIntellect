@@ -11,19 +11,45 @@
             <h1>HSIntellect</h1>
 
             <section>
-                <h2>Overlay</h2>
+                <h2>Overlays</h2>
 
                 <label class="row">
-                    <span>Show overlay</span>
-                    <input type="checkbox" class="switch" id="overlay-visible" />
+                    <span>Show deck tracker</span>
+                    <input type="checkbox" class="switch" data-setting="overlayVisible" />
+                </label>
+
+                <label class="row">
+                    <span>Show opponent tracker</span>
+                    <input type="checkbox" class="switch" data-setting="opponentOverlayVisible" />
                 </label>
 
                 <label class="row">
                     <span>
-                        Lock overlay
+                        Only show during games
+                        <small>Always shown while unlocked</small>
+                    </span>
+                    <input type="checkbox" class="switch" data-setting="overlayAutoHide" />
+                </label>
+
+                <label class="row">
+                    <span>
+                        Lock overlays
                         <small>Clicks pass through to the game</small>
                     </span>
-                    <input type="checkbox" class="switch" id="overlay-locked" />
+                    <input type="checkbox" class="switch" data-setting="overlayLocked" />
+                </label>
+
+                <label class="row">
+                    <span>Show draw chance</span>
+                    <input type="checkbox" class="switch" data-setting="showDrawChance" />
+                </label>
+
+                <label class="row">
+                    <span>
+                        Card preview on hover
+                        <small>Shows the full card next to the overlay</small>
+                    </span>
+                    <input type="checkbox" class="switch" data-setting="showCardPreview" />
                 </label>
 
                 <label class="row">
@@ -36,7 +62,7 @@
                     <input type="range" id="overlay-scale" min="0.6" max="1.6" step="0.05" />
                 </label>
 
-                <button id="reset-position" class="secondary">Reset overlay position</button>
+                <button id="reset-position" class="secondary">Reset overlay positions</button>
             </section>
 
             <section>
@@ -45,7 +71,7 @@
                     id="deck-code"
                     rows="3"
                     spellcheck="false"
-                    placeholder="Paste a deck code (or the full text copied from Hearthstone)"
+                    placeholder="Paste a deck code (or the full text copied from Hearthstone). Decks are also picked up automatically when you queue."
                 ></textarea>
                 <div class="actions">
                     <button id="load-deck">Load deck</button>
@@ -55,9 +81,41 @@
             </section>
 
             <section>
+                <h2>Stats</h2>
+                <div class="row">
+                    <span>This deck</span>
+                    <span id="deck-record" class="record"></span>
+                </div>
+                <ul id="recent-games"></ul>
+                <button id="clear-history" class="secondary">Clear match history</button>
+            </section>
+
+            <section>
+                <h2>Hearthstone</h2>
+                <div class="status-line">
+                    <span id="hs-status"></span>
+                    <code id="hs-path"></code>
+                    <span id="hs-error" class="error"></span>
+                </div>
+                <div class="actions">
+                    <button id="hs-browse" class="secondary">Choose folder…</button>
+                    <button id="hs-auto" class="secondary">Auto-detect</button>
+                </div>
+            </section>
+
+            <section>
+                <h2>Card database</h2>
+                <div class="row">
+                    <span id="cards-info"></span>
+                    <button id="cards-refresh" class="secondary">Refresh now</button>
+                </div>
+                <small class="hint">Refresh after a patch if new cards show as IDs.</small>
+            </section>
+
+            <section>
                 <h2>Shortcuts</h2>
-                <div class="row"><span>Toggle overlay</span><kbd id="kbd-toggle"></kbd></div>
-                <div class="row"><span>Lock / unlock overlay</span><kbd id="kbd-lock"></kbd></div>
+                <div class="row"><span>Toggle overlays</span><kbd id="kbd-toggle"></kbd></div>
+                <div class="row"><span>Lock / unlock overlays</span><kbd id="kbd-lock"></kbd></div>
             </section>
 
             <button id="quit" class="danger">Quit HSIntellect</button>

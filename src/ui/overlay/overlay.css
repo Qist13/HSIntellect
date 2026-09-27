@@ -120,8 +120,45 @@ body.unlocked #root {
     color: #ff9b2f;
 }
 
+.card .chance {
+    position: relative;
+    flex: none;
+    padding: 0 6px;
+    font-size: 11px;
+    color: #cfd6e4;
+}
+
+/* Cards added to the deck during the game */
+.card.extra {
+    box-shadow: inset 3px 0 0 #5fc16a;
+}
+
+.card.extra .name {
+    font-style: italic;
+}
+
 .card.empty {
     opacity: 0.35;
+}
+
+#empty,
+#stats {
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: rgba(20, 20, 28, 0.9);
+    font-size: 12px;
+    color: #cfd6e4;
+}
+
+#empty:empty,
+#stats:empty {
+    display: none;
+}
+
+#stats {
+    display: flex;
+    justify-content: space-around;
+    gap: 8px;
 }
 
 #unlocked-hint {
