@@ -30,6 +30,8 @@ import {
 } from "./windows/overlayWindow.js";
 import { createControlWindow } from "./windows/controlWindow.js";
 import { startCardPreview } from "./windows/cardPreview.js";
+import { createTray } from "./windows/tray.js";
+import { isAutostartEnabled, setAutostartEnabled, shouldStartHidden } from "./utils/autostart.js";
 
 const TOGGLE_OVERLAY_SHORTCUT = "CommandOrControl+Shift+H";
 const TOGGLE_LOCK_SHORTCUT = "CommandOrControl+Shift+L";
@@ -56,8 +58,14 @@ if (process.platform === "linux") {
     app.commandLine.appendSwitch("enable-transparent-visuals");
 }
 
+// Keep settings in the same folder whether running from source or packaged
+// (the packaged app would otherwise use its product name, "HSIntellect")
+app.setPath("userData", path.join(app.getPath("appData"), "hsintellect"));
+
 const overlays = { player: null, opponent: null };
 let control = null;
+let tray = null;
+let isQuitting = false;
 let currentDeck = null;
 
 const tracker = new GameTracker();
@@ -90,8 +98,30 @@ function setSetting(key, value) {
     applyAllOverlaySettings();
     broadcast("settings:changed", settings);
     publish();
+    tray?.update();
 
     return settings;
+}
+
+function toggleOverlays() {
+    // Toggle both overlays together
+    const { overlayVisible, opponentOverlayVisible } = getSettings();
+    const visible = !(overlayVisible || opponentOverlayVisible);
+    updateSettings({ overlayVisible: visible });
+    setSetting("opponentOverlayVisible", visible);
+}
+
+function setAutostart(enabled) {
+    try {
+        setAutostartEnabled(enabled);
+    } catch (err) {
+        console.error("[✕] Failed to change start at login:", err.message);
+    }
+
+    const autostart = isAutostartEnabled();
+    tray?.update();
+    sendToControl("autostart:changed", autostart);
+    return autostart;
 }
 
 /* ---------- Cards ---------- */
@@ -410,6 +440,7 @@ function registerIpc() {
         history: getHistorySummary(currentDeck?.code),
         hearthstone,
         cardDatabase: getCardDatabaseInfo(),
+        autostart: isAutostartEnabled(),
         shortcuts: {
             toggleOverlay: TOGGLE_OVERLAY_SHORTCUT,
             toggleLock: TOGGLE_LOCK_SHORTCUT,
@@ -468,17 +499,13 @@ function registerIpc() {
         return summary;
     });
 
+    ipcMain.handle("autostart:set", (_event, enabled) => setAutostart(Boolean(enabled)));
+
     ipcMain.handle("app:quit", () => app.quit());
 }
 
 function registerShortcuts() {
-    globalShortcut.register(TOGGLE_OVERLAY_SHORTCUT, () => {
-        // Toggle both overlays together
-        const { overlayVisible, opponentOverlayVisible } = getSettings();
-        const visible = !(overlayVisible || opponentOverlayVisible);
-        updateSettings({ overlayVisible: visible });
-        setSetting("opponentOverlayVisible", visible);
-    });
+    globalShortcut.register(TOGGLE_OVERLAY_SHORTCUT, toggleOverlays);
     globalShortcut.register(TOGGLE_LOCK_SHORTCUT, () =>
         setSetting("overlayLocked", !getSettings().overlayLocked),
     );
@@ -494,14 +521,51 @@ function openControlWindow() {
     }
 
     control = createControlWindow();
-    // The overlays alone can't be interacted with, so closing the control window quits
+
+    // Closing the window keeps the app running in the tray
+    control.on("close", (event) => {
+        if (isQuitting || !tray) return;
+        event.preventDefault();
+        control.hide();
+    });
     control.on("closed", () => {
         control = null;
-        app.quit();
+        // Without a tray there'd be no way back in, so quit instead
+        if (!tray) app.quit();
     });
 }
 
+function startTray() {
+    try {
+        tray = createTray({
+            getState: () => {
+                const settings = getSettings();
+                return {
+                    overlaysVisible: settings.overlayVisible || settings.opponentOverlayVisible,
+                    overlaysLocked: settings.overlayLocked,
+                    autostart: isAutostartEnabled(),
+                };
+            },
+            onOpen: openControlWindow,
+            onToggleOverlays: toggleOverlays,
+            onToggleLock: () => setSetting("overlayLocked", !getSettings().overlayLocked),
+            onToggleAutostart: () => setAutostart(!isAutostartEnabled()),
+            onQuit: () => app.quit(),
+        });
+    } catch (err) {
+        console.error("[✕] Failed to create tray icon:", err.message);
+    }
+}
+
 async function main() {
+    // Only one copy at a time; launching again just opens the running one
+    if (!app.requestSingleInstanceLock()) {
+        app.quit();
+        return;
+    }
+    app.on("second-instance", openControlWindow);
+    app.on("before-quit", () => (isQuitting = true));
+
     await app.whenReady();
 
     const settings = loadSettings();
@@ -519,7 +583,10 @@ async function main() {
         overlays[kind] = createOverlayWindow(kind);
         overlays[kind].once("ready-to-show", applyAllOverlaySettings);
     }
-    openControlWindow();
+
+    startTray();
+    // Started at login: stay in the tray until opened
+    if (!shouldStartHidden() || !tray) openControlWindow();
 
     const preview = startCardPreview({
         getOverlays: () => Object.values(overlays),
@@ -540,6 +607,7 @@ async function main() {
         globalShortcut.unregisterAll();
         watcher?.stop();
         preview.destroy();
+        tray?.destroy();
     });
 }
 

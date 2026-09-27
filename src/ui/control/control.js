@@ -184,6 +184,14 @@ $("cards-refresh").addEventListener("click", async () => {
     }
 });
 
+/* ---------- General ---------- */
+
+const autostartInput = $("autostart");
+
+autostartInput.addEventListener("change", async () => {
+    autostartInput.checked = await window.hsi.setAutostart(autostartInput.checked);
+});
+
 /* ---------- Init ---------- */
 
 window.hsi.onSettings(applySettings);
@@ -191,6 +199,7 @@ window.hsi.onDeck(renderDeck);
 window.hsi.onHistory(renderHistory);
 window.hsi.onHearthstone(renderHearthstone);
 window.hsi.onCardDatabase(renderCardDatabase);
+window.hsi.onAutostart((enabled) => (autostartInput.checked = enabled));
 
 window.hsi.getState().then((state) => {
     applySettings(state.settings);
@@ -198,6 +207,7 @@ window.hsi.getState().then((state) => {
     renderHistory(state.history);
     renderHearthstone(state.hearthstone);
     renderCardDatabase(state.cardDatabase);
+    autostartInput.checked = state.autostart;
     if (!state.deck) deckCodeInput.value = state.settings.deckCode;
     $("kbd-toggle").textContent = formatShortcut(state.shortcuts.toggleOverlay);
     $("kbd-lock").textContent = formatShortcut(state.shortcuts.toggleLock);

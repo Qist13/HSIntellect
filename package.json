@@ -1,24 +1,68 @@
 {
     "name": "hsintellect",
     "version": "1.0.0",
+    "description": "Hearthstone deck tracker overlay",
+    "author": "Qi Kun Xia <qikunx13@gmail.com>",
+    "license": "ISC",
     "type": "module",
     "main": "src/main.js",
+    "desktopName": "hsintellect.desktop",
     "scripts": {
         "start": "electron .",
-        "test": "node --test \"test/**/*.test.js\""
+        "test": "node --test \"test/**/*.test.js\"",
+        "icons": "electron scripts/generate-icons.mjs",
+        "dist": "electron-builder",
+        "dist:linux": "electron-builder --linux",
+        "dist:win": "electron-builder --win",
+        "dist:mac": "electron-builder --mac"
     },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/Qist13/HSIntellect.git"
     },
-    "author": "",
-    "license": "ISC",
     "bugs": {
         "url": "https://github.com/Qist13/HSIntellect/issues"
     },
     "homepage": "https://github.com/Qist13/HSIntellect#readme",
-    "description": "",
     "devDependencies": {
-        "electron": "^44.4.5"
+        "electron": "^44.4.5",
+        "electron-builder": "^26.15.3"
+    },
+    "build": {
+        "appId": "com.qist13.hsintellect",
+        "productName": "HSIntellect",
+        "directories": {
+            "output": "dist",
+            "buildResources": "build"
+        },
+        "files": [
+            "package.json",
+            "src/**/*",
+            "!src/.cache/**"
+        ],
+        "linux": {
+            "target": [
+                "AppImage",
+                "deb"
+            ],
+            "category": "Game",
+            "icon": "build/icon.png",
+            "executableName": "hsintellect",
+            "synopsis": "Hearthstone deck tracker overlay",
+            "syncDesktopName": true
+        },
+        "win": {
+            "target": "nsis",
+            "icon": "build/icon.png"
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true
+        },
+        "mac": {
+            "target": "dmg",
+            "category": "public.app-category.games",
+            "icon": "build/icon.png"
+        }
     }
 }

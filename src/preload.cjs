@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld("hsi", {
     browseHearthstoneDir: () => ipcRenderer.invoke("hearthstone:browse"),
     autoDetectHearthstoneDir: () => ipcRenderer.invoke("hearthstone:auto-detect"),
     clearHistory: () => ipcRenderer.invoke("history:clear"),
+    setAutostart: (enabled) => ipcRenderer.invoke("autostart:set", enabled),
     quit: () => ipcRenderer.invoke("app:quit"),
 
     onSettings: (callback) => subscribe("settings:changed", callback),
@@ -24,6 +25,7 @@ contextBridge.exposeInMainWorld("hsi", {
     onHistory: (callback) => subscribe("history:changed", callback),
     onHearthstone: (callback) => subscribe("hearthstone:changed", callback),
     onCardDatabase: (callback) => subscribe("cards:changed", callback),
+    onAutostart: (callback) => subscribe("autostart:changed", callback),
 
     // Overlays
     onOverlayView: (callback) => subscribe("overlay:view", callback),
